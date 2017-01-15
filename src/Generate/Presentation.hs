@@ -1,9 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generate.Presentation (
-  makePresHTML,
-  makePresPDF,
-  makePresLatex
-) where
+module Generate.Presentation ( makePresHTML
+                             , makePresPDF
+                             , makePresLatex
+                             ) where
 
 import Lucid
 import Lucid.Html5
@@ -17,21 +16,17 @@ import Text.Pandoc.Options (def)
 import Text.Pandoc.PDF (makePDF)
 import Data.List
 import Data.ByteString.Lazy.Internal
+import Clay hiding (id)
 
 styles :: Html ()
-styles = style_ ("body {"
-  <> "margin: 2cm;"
-  <> "font-family: 'Segoe UI', Arial, freesans, sans-serif;"
-  <> "font-size: 300%;"
-  <> "color: #333;"
-  <> "}"
-  <> "h1 {"
-  <> "border-bottom: solid 1px lightgray;"
-  <> "}"
-  <> ".slide {"
-  <> "page-break-after: always;"
-  <> "}"
-  )
+styles = style_ . LT.toStrict . render $ do
+  body ? do
+    margin (cm 2) (cm 2) (cm 2) (cm 2)
+    fontFamily ["Segoe UI", "Arial"] [sansSerif]
+    fontSize (pct 300)
+    color black
+  h1 ? borderBottom solid (px 1) lightgray
+  element ".slide" ? ("page-break-after" -: "always")
 
 slide :: T.Text -> Html () -> Html ()
 slide t content =
@@ -54,7 +49,7 @@ convertHtmlToLatex = either (const "Could not read file") (Pan.writeLaTeX def)
 
 makePresLatex = convertHtmlToLatex . makePresHTML
 
-convertHtmlToPDF:: String -> IO (Either ByteString ByteString)
+convertHtmlToPDF :: String -> IO (Either ByteString ByteString)
 convertHtmlToPDF = either (const (pure . Left $ "Could not read file")) (makePDF "pdflatex" Pan.writeLaTeX def)
                  . Pan.readHtml def
 

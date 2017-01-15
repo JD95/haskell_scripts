@@ -1,9 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lookup.OEIS (
-  queryOEIS,
-  findSequence
-) where
+module Lookup.OEIS ( queryOEIS
+                   , findSequence
+                   ) where
 
 import           Control.Arrow
 import           Control.Lens

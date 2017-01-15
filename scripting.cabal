@@ -17,7 +17,9 @@ library
   hs-source-dirs:      src
   exposed-modules:     Lib
                      , Lookup.OEIS
+                     , Lookup.Reddit
                      , Generate.Presentation
+                     , Reminders.Folders
   build-depends:       base >= 4.7 && < 5
                      , wreq
                      , lens-aeson
@@ -26,6 +28,12 @@ library
                      , lucid
                      , text
                      , pandoc
+                     , clay >= 0.11
+                     , reddit
+                     , directory
+                     , process
+                     , recursion-schemes
+                     , data-default-class
   default-language:    Haskell2010
 
 executable scripting-exe
