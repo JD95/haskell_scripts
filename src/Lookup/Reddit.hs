@@ -1,6 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lookup.Reddit () where
+module Lookup.Reddit ( pullPostsFrom
+                     , nPostsFrom
+                     , postsSince
+                     , postsForThisWeek
+                     , titlesFromThisWeek
+                     ) where
 
 import Control.Monad
 import Control.Monad.IO.Class

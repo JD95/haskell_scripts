@@ -18,12 +18,17 @@ import Data.List
 import Data.ByteString.Lazy.Internal
 import Clay hiding (id)
 
+import qualified Data.ByteString.Char8 as B
+import qualified Lookup.Reddit as Reddit
+
+type Pres = [(T.Text, [T.Text])]
+
 styles :: Html ()
 styles = style_ . LT.toStrict . render $ do
   body ? do
     margin (cm 2) (cm 2) (cm 2) (cm 2)
     fontFamily ["Segoe UI", "Arial"] [sansSerif]
-    fontSize (pct 300)
+    fontSize (pct 100)
     color black
   h1 ? borderBottom solid (px 1) lightgray
   element ".slide" ? ("page-break-after" -: "always")
@@ -37,8 +42,7 @@ slide t content =
 points :: [T.Text] -> Html ()
 points = ul_ [] . mapM_ (li_ [] . toHtml)
 
-
-makePresHTML :: [(T.Text, [T.Text])] -> String
+makePresHTML :: Pres -> String
 makePresHTML = LT.unpack . renderText
              . doctypehtml_
              . (header_ styles >>)
@@ -53,5 +57,26 @@ convertHtmlToPDF :: String -> IO (Either ByteString ByteString)
 convertHtmlToPDF = either (const (pure . Left $ "Could not read file")) (makePDF "pdflatex" Pan.writeLaTeX def)
                  . Pan.readHtml def
 
-makePresPDF :: [(T.Text, [T.Text])] -> IO ByteString
+makePresPDF :: Pres -> IO ByteString
 makePresPDF = fmap (either id id) . convertHtmlToPDF . makePresHTML
+
+genPresFromReddit :: Monoid a => (Pres -> a) -> T.Text -> IO a
+genPresFromReddit presF = Reddit.titlesFromThisWeek                  
+                      >=> pure . either mempty (presF . fmap (flip (,) []) . take 10)
+
+line :: T.Text -> T.Text
+line l = l <> "\n"
+
+bullet :: T.Text -> T.Text
+bullet l = "\t" <> l <> "\n"
+
+(><) :: (a -> c) -> (b -> d) -> (a,b) -> (c,d)
+f >< g = first f . second g
+
+infixr 8 ><
+
+makePPTOutline :: Pres -> T.Text
+makePPTOutline = T.concat . fmap (T.concat . uncurry (:) . (line >< (fmap bullet)))
+
+redditPresentation subName fileName f =
+    (B.pack . T.unpack) <$> (genPresFromReddit f subName) >>= B.writeFile fileName
