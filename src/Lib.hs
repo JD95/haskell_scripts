@@ -13,4 +13,4 @@ someFunc = do
   let pres = [("Title 1" , []), ("Title 2", ["a","b","c"])]
   --BL.writeFile "pres.pdf" pres
   writeFile "pres.tex" (makePresLatex pres)
-  writeFile "pres.html" (makePresHTML pres)
+--  writeFile "pres.html" (T.pack makePresHTML pres)

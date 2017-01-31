@@ -1,7 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generate.Presentation ( makePresHTML
-                             , makePresPDF
-                             , makePresLatex
+module Generate.Presentation ( 
                              ) where
 
 import Lucid
@@ -16,49 +14,49 @@ import Text.Pandoc.Options (def)
 import Text.Pandoc.PDF (makePDF)
 import Data.List
 import Data.ByteString.Lazy.Internal
-import Clay hiding (id)
 
 import qualified Data.ByteString.Char8 as B
 import qualified Lookup.Reddit as Reddit
 
 type Pres = [(T.Text, [T.Text])]
 
-styles :: Html ()
-styles = style_ . LT.toStrict . render $ do
-  body ? do
-    margin (cm 2) (cm 2) (cm 2) (cm 2)
-    fontFamily ["Segoe UI", "Arial"] [sansSerif]
-    fontSize (pct 100)
-    color black
-  h1 ? borderBottom solid (px 1) lightgray
-  element ".slide" ? ("page-break-after" -: "always")
+data PageType = TODO
 
-slide :: T.Text -> Html () -> Html ()
-slide t content =
-  div_ [class_ "slide"] $ do
-    h2_ [] (toHtml t)
-    content
+{- Matching specification from https://developers.google.com/slides/reference/rest/v1/presentations.pages#Page.PageElement -}
 
-points :: [T.Text] -> Html ()
-points = ul_ [] . mapM_ (li_ [] . toHtml)
+data Page = Page
+          { pageId :: String
+          , pageType :: PageType
+          , pageElements :: [PageElement]
+          , pageProperties :: PageProperties
+          , slideProperties :: SlideProperties
+          }
 
-makePresHTML :: Pres -> String
-makePresHTML = LT.unpack . renderText
-             . doctypehtml_
-             . (header_ styles >>)
-             . body_ [] . mapM_ (second points >>> uncurry slide)
+data PageElement = PageElement
+                 { elementId :: String
+                 , size :: Int
+                 , transform :: AffineTransform
+                 , title :: String
+                 , description :: String
+                 }
 
-convertHtmlToLatex = either (const "Could not read file") (Pan.writeLaTeX def)
-                   . Pan.readHtml def
+data Size = Size { width :: Dimension
+                 , height :: Dimension
+                 }
 
-makePresLatex = convertHtmlToLatex . makePresHTML
+data Dimension = Dimension { magnitude :: Int
+                           , unit :: Unit
+                           }
 
-convertHtmlToPDF :: String -> IO (Either ByteString ByteString)
-convertHtmlToPDF = either (const (pure . Left $ "Could not read file")) (makePDF "pdflatex" Pan.writeLaTeX def)
-                 . Pan.readHtml def
+data Unit = UNIT_UNSPECIFIED -- ^ The units are unknown.
+          | EMU -- ^ 	An English Metric Unit (EMU) is defined as 1/360,000 of a centimeter and thus there are 914,400 EMUs per inch, and 12,700 EMUs per point.
+          | PT -- ^ A point, 1/72 of an inch.
 
-makePresPDF :: Pres -> IO ByteString
-makePresPDF = fmap (either id id) . convertHtmlToPDF . makePresHTML
+data PageProperties = T2
+
+data SlideProperties = T3
+
+data AffineTransform = T4
 
 genPresFromReddit :: Monoid a => (Pres -> a) -> T.Text -> IO a
 genPresFromReddit presF = Reddit.titlesFromThisWeek                  
